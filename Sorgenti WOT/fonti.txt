@@ -1,0 +1,3 @@
+coap://localhost:5686/provathing2
+coap://localhost:5685/provathing
+coap://localhost:5687/provathing3

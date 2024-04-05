@@ -1,0 +1,42 @@
+Al giorno d'oggi siamo sempre più circondati da sistemi IoT. Il problema che sorge però è che per motivi storici ed ingegneristici non c'è uno standard per la comunicazione fra Things, infatti vengono utilizzati protocolli e metodologie diverse che ne rendono impossibile la comunicazione. Sono stati proposti vari standard e paradigmi per risolvere questo problema, uno di questi è il Web of Things proposto dal W3C. Ciò che andrò quindi a presentare con la mia tesi è una possibile soluzione all'integrazione del Web of Things con il framework Arrowhead mostrando il corretto funzionamento attraverso la risoluzione di un caso d'uso reale relativo al monitoraggio strutturale.
+
+
+Il Web of Things si basa su astrazioni chiamate Web Things che vengono rappresentate attraverso le Thing Description sotto forma di file JSON e descrivono gli oggetti attraverso:
+Property cioè caratteristiche relative alle Web Things, nel caso di un sensore i valori rilevati,
+Action cioè azioni eseguite dalla Web Thing come ad esempio l'operazione di rilevazione,
+Event cioè azioni che avvengono di conseguenza ad altre azioni ad esempio il bip del sensore se rileva valori anomali
+L'utente interagisce quindi con le Web Things attraverso la loro descrizione che gli permettono di conoscere le loro funzionalità ed utilizzarle.
+Il problema del Web of Things è che non possiede un meccanismo di discovery quindi un utente non ha modo di sapere con quali dispositivi può interagire, per questo motivo ho deciso di far interoperare il WoT con Arrowhead. 
+
+
+Arrowhead è un framework di interoperabilità industriale con architettura orientata ai servizi. Possiede un service broker, chiamato Service Registry, che ha il compito di fornire agli utenti i servizi con cui interagire, un sistema che gestisce le autorizzazioni chiamato Authorization ed un sistema che gestisce le richieste ai servizi chiamato Orchestrator. Nell'immagine vediamo come avviene l'interazione tra i vari sistemi quando l'utente richiede l'utilizzo di un servizio. L'utente quando prova a richiedere l'utilizzo di un servizio comunica con l'orchestrator che, comunicando con l'Authorization verifica se l'utente ha i permessi necessari, dopodichè comunica l'esito della verifica al Service Registry che agirà di conseguenza fornendo o meno il servizio richiesto.
+
+
+Per realizzare l'integrazione tra il WoT ed Arrowhead ho sviluppato un framework chiamato WoT Arrowhead Enabler (WAE) che contiene al suo interno altre due componenti: l'Arrowhead Thing Mirror (ATM) e la Thing Directory (TD), il cui compito principale è quello di ricercare nuove Web Things da pubblicare sul Service Registry.
+L'ATM è un server proxy HTTP ed ha il compito di replicare il comportamento della Web Thing in modo tale che l'utente finale possa interagire facilmente con la Web Thing attraverso chiamate REST. Ogni Web Thing possiede un proprio ATM il cui indirizzo, formato da IP e porta, verrà successivamente pubblicato all'interno del Service Registry di Arrowhead.
+La Thing Directory è un contenitore di Web Things ed ha il compito di contenere tutte quelle Web Things che vogliono essere pubblicate come servizi su Arrowhead.
+Nell'immagine è possibile vedere la struttura complessiva in cui il sensore fisico viene astratto in Web Thing e inserito dentro la Thing Directory e per ogni Web Thing viene creato un ATM che verrà successivamente pubblicato.
+
+
+Nella slide successiva vediamo più nel dettaglio come avviente l'interazione tra le componenti quando l'utente utilizza un servizio. Qui vediamo che l'utente effettua la richiesta attraverso API REST all'ATM che a sua volta la inoltra alla Web Thing, la Web Thing produce il risultato e lo fornisce all'ATM che lo inoltra al client.
+
+
+Infine per dimostrare la corretta interoperabilità tra le componenti ho realizzato un'applicazione mobile lato client per smartphone android chiamata WoT App che permette il monitoraggio strutturale di un edificio, che si trova al lazzaretto di Bologna, in cui sono stati installati dei sensori con accelerometro e giroscopio. Questa applicazione contiene un database che conserva i dati relativi alle rilevazioni, una lista dei servizi che mostra tutti i servizi con cui è possibile interagire, un grafico a linee che mostra l'andamento dei parametri rilevati nel tempo, un servizio di monitoraggio dei parametri scelti dall'utente che viene eseguito in background.
+
+
+Per quanto riguarda l'implementazione del WAE, ATM e TD sono state implementati utilizzando Javascript con il framework Node JS.
+Il WAE è una Web Thing con una property chiamata lista thing che contiene la lista di tutti gli endpoint delle web thing di cui sono stati creati gli ATM e due action: query che fornisce all'utente la lista dei servizi disponibili sul Service Registry di Arrowhead e ricerca che contiene: l'algoritmo utilizzato per ricercare dentro la TD nuove Web Thing, la creazione dell'ATM e la registrazione dell'endpoint.
+L'ATM è un server proxy creato con il pacchetto HTTP, il suo compito consiste nel ricevere le richieste dell'utente, inoltrarle alla Web Thing di riferimento, ottenere i risultati ed inoltrarli all'utente realizzando quindi un vero e proprio ponte tra utente finale e Web Thing.
+La TD è una Web Thing che contiene una property chiamata Lista Thing in cui raccoglie tutti gli endpoint di tutte le Web Things che vogliono essere connesse ad Arrowhead.
+Per quanto riguarda la WOT APP è stata sviluppata in Java utilizzando librerie aggiuntive come  Room per la gestione del DB con le relative query, Volley per l'utilizzo delle API REST, MPAndroidChart per la realizzazione dei grafici. 
+
+Quando l'app viene avviata la prima volta viene mostrata la schermata delle impostazioni in cui l'utente può decidere quali parametri monitorare, le soglie e l'intervallo tra una rilevazione e la successiva, dopodichè l'utente vedrà la lista dei servizi disponibili contenuti dentro una Recycler View.
+
+
+Premendo su un servizio raggiungerà un'altra schermata in cui potrà decidere quale proprietà visualizzare o quale azione eseguire sulla Web Thing da lui selezionata e, dopo aver eseguito l'operazione, potrà premere un pulsante per visualizzare lo storico relativo. Nello storico è presente tutta la lista di valori rilevati relativi a quel parametro ed un grafico che mostra la variazione dei valori nel tempo. Nel mio caso visto che i sensori che ho usato sono triassiali è stato necessario calcolare il vettore dei valori per inserirli nel grafico. Infine è presente la funzione di monitoraggio che è stata implementata con un Intent Service che effettua le rilevazioni e verifica se i parametri rilevati non siano superiori a quelli inseriti nella pagina delle impostazioni, in questo caso attraverso un Notification Helper viene creata la notifica e con un Broadcast Receiver viene mostrata all'utente.
+
+
+In questa tesi ho dimostrato quindi come sia possibile realizzare l'interoperabilità degli ecosistemi IoT attraverso il Web of Things ed Arrowhead.
+I risultati sono promettenti in quanto l’applicazione in futuro potrebbe essere aggiornata in modo tale da permettere facilmente l’interazione con altre Web Things sotto forma di servizi.
+Il framework inoltre è molto flessibile quindi un domani potrebbe essere espanso gestendo qualunque altro tipo di Web Thing.
+Grazie mille per l'attenzione.
